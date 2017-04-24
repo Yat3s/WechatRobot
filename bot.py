@@ -80,7 +80,7 @@ class TulingWXBot(WXBot):
                 if idx == content:
                     self.robot_switch = True
                     self.send_msg_by_uid(u'[Robot]' + u'机器人已开启！', msg['user']['id'])
-        if findCmd:
+        if not findCmd:
             self.send_msg_by_uid(replyMsg, msg['user']['id'])
 
     def handle_msg_all(self, msg):
@@ -91,11 +91,11 @@ class TulingWXBot(WXBot):
         user_id = msg['user']['id']
 
         print 'Content--> ', messgae_content
-        print 'MessageTypeId--> ', messgae_type_id
-        print 'ContentTypeId--> ', content_type_id
+        print 'MessageTypeId--> ', messgae_type_id # 整个消息的类型
+        print 'ContentTypeId--> ', content_type_id # 文本 图片类型等
         print 'UserName--> ', username
 
-        if not self.robot_switch and username != self.adminName:
+        if not self.robot_switch and content_type_id != 1:
             return
         if username == self.adminName:
             self.hand_admin_msg(msg)
