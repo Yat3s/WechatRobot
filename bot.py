@@ -12,6 +12,7 @@ class TulingWXBot(WXBot):
 
         self.tuling_key = ""
         self.robot_switch = True
+        self.adminName = u"Yat3s"
 
         try:
             cf = ConfigParser.ConfigParser()
@@ -62,10 +63,43 @@ class TulingWXBot(WXBot):
                     self.robot_switch = True
                     self.send_msg_by_uid(u'[Robot]' + u'机器人已开启！', msg['to_user_id'])
 
+    def hand_admin_msg(self, msg):
+        content = msg['content']['data']
+        replyMsg = u"欢迎主人，请吩咐!"
+        stop_cmd = [u'退下', u'走开', u'关闭', u'关掉', u'休息', u'滚开']
+        start_cmd = [u'出来', u'启动', u'工作']
+        findCmd = False;
+        if self.robot_switch:
+            for idx in stop_cmd:
+                if idx == content:
+                    self.robot_switch = False
+                    self.send_msg_by_uid(u'[Robot]' + u'机器人已关闭！', msg['user']['id'])
+                    findCmd = True;
+        else:
+            for idx in start_cmd:
+                if idx == content:
+                    self.robot_switch = True
+                    self.send_msg_by_uid(u'[Robot]' + u'机器人已开启！', msg['user']['id'])
+        if findCmd:
+            self.send_msg_by_uid(replyMsg, msg['user']['id'])
+
     def handle_msg_all(self, msg):
-        if not self.robot_switch and msg['msg_type_id'] != 1:
+        messgae_content = msg['content']['data']
+        messgae_type_id = msg['msg_type_id']
+        content_type_id = msg['content']['type']
+        username = msg['user']['name']
+        user_id = msg['user']['id']
+
+        print 'Content--> ', messgae_content
+        print 'MessageTypeId--> ', messgae_type_id
+        print 'ContentTypeId--> ', content_type_id
+        print 'UserName--> ', username
+
+        if not self.robot_switch and username != self.adminName:
             return
-        if msg['msg_type_id'] == 1 and msg['content']['type'] == 0:  # reply to self
+        if username == self.adminName:
+            self.hand_admin_msg(msg)
+        elif msg['msg_type_id'] == 1 and msg['content']['type'] == 0:  # reply to self
             self.auto_switch(msg)
         elif msg['msg_type_id'] == 4 and msg['content']['type'] == 0:  # text message from contact
             self.send_msg_by_uid(self.tuling_auto_reply(msg['user']['id'], msg['content']['data']), msg['user']['id'])
@@ -106,4 +140,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
