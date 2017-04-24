@@ -12,7 +12,6 @@ class TulingWXBot(WXBot):
         self.tuling_key = ""
         self.robot_switch = True
         self.adminName = u'Yat3s'
-        self.robotName = u'Aran'
         self.DEBUG = True
 
         try:
@@ -115,17 +114,18 @@ class TulingWXBot(WXBot):
                 for detail in msg['content']['detail']:
                     # if detail['type'] == 'at':
                     for k in my_names:
-                        if my_names[k] and my_names[k] in detail['value'] or self.robotName in detail['value']:
+                        if my_names[k] and my_names[k] in detail['value'] or my_nickname.lower() in detail['value'] or my_nickname in detail['value']:
                             is_at_me = True
                             break
                 if is_at_me:
                     src_name = msg['content']['user']['name']
+                    content = msg['content']['desc'].replace(my_nickname, '')
                     if src_name == self.adminName:
-                        self.hand_admin_msg(msg['content']['desc'], msg['user']['id'])
+                        self.hand_admin_msg(content, msg['user']['id'])
                     else :
-                        reply = '@' + src_name + ' '
+                        reply = src_name == unknown ? '' : '@' + src_name + ' '
                         if msg['content']['type'] == 0:  # text message
-                            reply += self.tuling_auto_reply(msg['content']['user']['id'], msg['content']['desc'])
+                            reply += self.tuling_auto_reply(msg['content']['user']['id'], content)
                         else:
                             reply += u"对不起，我刚上二年级，只看得懂字，其他杂七杂八的我都不认识，,,Ծ‸Ծ,,"
                         self.send_msg_by_uid(reply, msg['user']['id'])
