@@ -123,7 +123,7 @@ class TulingWXBot(WXBot):
                     if src_name == self.adminName:
                         self.hand_admin_msg(msg['content']['desc'], msg['user']['id'])
                     else :
-                        reply = 'to ' + src_name + ': '
+                        reply = '@' + src_name + ' '
                         if msg['content']['type'] == 0:  # text message
                             reply += self.tuling_auto_reply(msg['content']['user']['id'], msg['content']['desc'])
                         else:
