@@ -5,7 +5,6 @@ from wxbot import *
 import ConfigParser
 import json
 
-
 class TulingWXBot(WXBot):
     def __init__(self):
         WXBot.__init__(self)
@@ -13,6 +12,7 @@ class TulingWXBot(WXBot):
         self.tuling_key = ""
         self.robot_switch = True
         self.adminName = u"Yat3s"
+        self.DEBUG = True
 
         try:
             cf = ConfigParser.ConfigParser()
@@ -48,40 +48,27 @@ class TulingWXBot(WXBot):
         else:
             return u"知道啦"
 
-    def auto_switch(self, msg):
-        msg_data = msg['content']['data']
-        stop_cmd = [u'退下', u'走开', u'关闭', u'关掉', u'休息', u'滚开']
-        start_cmd = [u'出来', u'启动', u'工作']
-        if self.robot_switch:
-            for i in stop_cmd:
-                if i == msg_data:
-                    self.robot_switch = False
-                    self.send_msg_by_uid(u'[Robot]' + u'机器人已关闭！', msg['to_user_id'])
-        else:
-            for i in start_cmd:
-                if i == msg_data:
-                    self.robot_switch = True
-                    self.send_msg_by_uid(u'[Robot]' + u'机器人已开启！', msg['to_user_id'])
 
     def hand_admin_msg(self, msg):
         content = msg['content']['data']
         replyMsg = u"欢迎主人，请吩咐!"
-        stop_cmd = [u'退下', u'走开', u'关闭', u'关掉', u'休息', u'滚开']
-        start_cmd = [u'出来', u'启动', u'工作']
+        stop_cmd = [u'stop', u'退下', u'走开', u'关闭', u'关掉', u'休息', u'滚开']
+        start_cmd = [u'start', u'出来', u'启动', u'工作']
         findCmd = False;
         if self.robot_switch:
             for idx in stop_cmd:
                 if idx == content:
                     self.robot_switch = False
-                    self.send_msg_by_uid(u'[Robot]' + u'机器人已关闭！', msg['user']['id'])
+                    self.send_msg_by_uid(u'爸爸我滚去睡觉了', msg['user']['id'])
                     findCmd = True;
         else:
             for idx in start_cmd:
                 if idx == content:
                     self.robot_switch = True
-                    self.send_msg_by_uid(u'[Robot]' + u'机器人已开启！', msg['user']['id'])
+                    self.send_msg_by_uid(u'爸爸我起来了', msg['user']['id'])
         if not findCmd:
             self.send_msg_by_uid(replyMsg, msg['user']['id'])
+
 
     def handle_msg_all(self, msg):
         messgae_content = msg['content']['data']
@@ -89,21 +76,32 @@ class TulingWXBot(WXBot):
         content_type_id = msg['content']['type']
         username = msg['user']['name']
         user_id = msg['user']['id']
+        if self.DEBUG:
+            print 'Content--> ', messgae_content
+            print 'MessageTypeId--> ', messgae_type_id # 整个消息的类型
+            print 'ContentTypeId--> ', content_type_id # 文本 图片类型等
+            print 'UserName--> ', username
+            print 'UserId--> ', user_id
 
-        print 'Content--> ', messgae_content
-        print 'MessageTypeId--> ', messgae_type_id # 整个消息的类型
-        print 'ContentTypeId--> ', content_type_id # 文本 图片类型等
-        print 'UserName--> ', username
-
-        if not self.robot_switch and content_type_id != 1:
+        if not self.robot_switch and username != self.adminName:
             return
-        if username == self.adminName:
+        if username == self.adminName: # Process admin command
             self.hand_admin_msg(msg)
-        elif msg['msg_type_id'] == 1 and msg['content']['type'] == 0:  # reply to self
-            self.auto_switch(msg)
         elif msg['msg_type_id'] == 4 and msg['content']['type'] == 0:  # text message from contact
             self.send_msg_by_uid(self.tuling_auto_reply(msg['user']['id'], msg['content']['data']), msg['user']['id'])
         elif msg['msg_type_id'] == 3 and msg['content']['type'] == 0:  # group text message
+            my_nickname = self.my_account['NickName']
+            if self.DEBUG:
+                print '------------ GROUP DEBUG --------------'
+                print 'MyNickname', self.my_account['NickName']
+                print 'Content', msg['content']
+                print 'ContentDetail', msg['content']['detail']
+                for detail in msg['content']['detail']:
+                    print 'ContentDetailType',detail['type']
+                    print 'ContentDetailValue', detail['value']
+                print 'username', msg['content']['user']['name']
+                print '------------ GROUP DEBUG --------------'
+
             if 'detail' in msg['content']:
                 my_names = self.get_group_member_name(msg['user']['id'], self.my_account['UserName'])
                 if my_names is None:
@@ -115,18 +113,20 @@ class TulingWXBot(WXBot):
 
                 is_at_me = False
                 for detail in msg['content']['detail']:
-                    if detail['type'] == 'at':
-                        for k in my_names:
-                            if my_names[k] and my_names[k] == detail['value']:
-                                is_at_me = True
-                                break
+                    # if detail['type'] == 'at':
+                    for k in my_names:
+                        if my_names[k] and my_names[k] in detail['value']:
+                            is_at_me = True
+                            break
                 if is_at_me:
                     src_name = msg['content']['user']['name']
                     reply = 'to ' + src_name + ': '
+                    if src_name == self.adminName:
+                        reply = u'叶爸爸，'
                     if msg['content']['type'] == 0:  # text message
                         reply += self.tuling_auto_reply(msg['content']['user']['id'], msg['content']['desc'])
                     else:
-                        reply += u"对不起，只认字，其他杂七杂八的我都不认识，,,Ծ‸Ծ,,"
+                        reply += u"对不起，我刚上二年级，只看得懂字，其他杂七杂八的我都不认识，,,Ծ‸Ծ,,"
                     self.send_msg_by_uid(reply, msg['user']['id'])
 
 
